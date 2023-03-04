@@ -1,7 +1,9 @@
-local lmc =              require('lmc');
-local readFile =         require('readFile');
-local lmc_assembler =    require('lmcassembler');
+local lmc =        require('lmc');
+local readFile =   require('readFile');
+local lmc_parser = require('lmcparser');
 
-local execute = lmc.new():execute(lmc_assembler.assemble(readFile("example.lmc")));
+local file = readFile("example.lmc");
+local process = lmc.new("Monkey", lmc_parser.parse(file));
+local execute = process:wrap(process:getProto("main"));
 
-execute(); -- Hello world!
+execute();
