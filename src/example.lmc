@@ -1,14 +1,16 @@
-setram 0 72;
-setram 1 101;
-setram 2 108;
-setram 3 108;
-setram 4 111;
-setram 5 32;
-setram 6 119;
-setram 7 111;
-setram 8 114;
-setram 9 108;
-setram 10 100;
-setram 11 33;
+setup:
+	set 1 50;
 
-ramstdoutrangestrnl 0 11;
+add:
+	add 0 0 1;
+	coutnl 0;
+
+output:
+	call add;
+	halt 1;
+
+main:
+	call setup;
+	call output;
+	call output;
+	call output;
