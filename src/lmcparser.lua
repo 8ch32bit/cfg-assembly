@@ -134,8 +134,7 @@ local function parse(src)
 							break;
 						end
 						local _sub = string.sub(instruction, pos, pos);
-						if isNumber(_sub) or _sub == "-" then
-							
+						if isNumber(_sub) or _sub == "-" or _sub == "." then
 							arg = arg .. _sub;
 						else
 							break;
