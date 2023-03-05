@@ -1,23 +1,13 @@
 local lmc = {};
 lmc.__index = lmc;
 
-local lmc_instructions = require('lmcinstructions');
-local instruction_idx =  lmc_instructions.instruction_idx;
-local instruction_tidx = lmc_instructions.instruction_tidx;
-local instruction_ridx = {}; for idx, val in pairs(instruction_idx) do instruction_ridx[val] = idx; end
-
 local null = "null";
 
-local function yield(x)
-	local c = os.clock();
-	repeat until os.clock() - c >= x;
-end
-
 function lmc.new(name, protos)
-	local self =  setmetatable({}, lmc);
-	self.name =   name or "lmc-main";
-	self.memory = {};
-	self.protos = protos or {};
+	local self = setmetatable({name = name or "lmc-main", memory = {}, protos = protos or {}}, lmc);
+	for idx = 1, #self.protos do
+		self.protos[idx].exec = self:wrap(self.protos[idx]);
+	end
 	for idx = 0, 2048 do
 		self.memory[idx] = 0;
 	end
@@ -25,25 +15,26 @@ function lmc.new(name, protos)
 end
 
 function lmc:deconstructInstruction(inst)
-	local op = inst[1];
-	local a =  inst[2] or null;
-	local b =  inst[3] or null;
-	local c =  inst[4] or null;
-	return op, a, b, c;
+	return inst[1], inst[2] or null, inst[3] or null, inst[4] or null;
 end
 
 function lmc:instruction2String(inst)
-	local op, a, b, c = self:deconstructInstruction(inst);
-	return string.format("instruction: [opcode: %s, a: %s, b: %s, c: %s]", instruction_ridx[op], a, b, c);
+	return string.format("instruction: [opcode: %s, a: %s, b: %s, c: %s]", self:deconstructInstruction(inst));
 end
 
 function lmc:getProto(name)
-	name = name or "main";
-	for idx, val in pairs(self.protos) do
-		if val.name == name then
-			return val;
-		end
+	for idx = 1, #self.protos do
+		if self.protos[idx].name == name then return self.protos[idx]; end
 	end
+end
+
+local function concat(t, encode, a, b)
+	a = a or 1; b = b or #t;
+	local s = encode and "" or table.concat(t, "", a, b);
+	for idx = a, b do
+		s = s .. (encode and string.char(t[idx]) or "");
+	end
+	return s;
 end
 
 function lmc:wrap(proto)
@@ -51,9 +42,9 @@ function lmc:wrap(proto)
 	local instructions = proto.instructions;
 	local max = #instructions;
 	return function()
-		local pc =  0;
+		local pc = 0;
 		local function setpc(x) pc = x; end
-		local function addpc(x)	pc = pc + (x and x or 1); end
+		local function addpc(x)	pc = pc + (x or 1); end
 		while true do
 			addpc();
 			if pc > max then
@@ -81,17 +72,9 @@ function lmc:wrap(proto)
 				elseif opcode == 9 then -- COUTNL
 					print(tostring(self.memory[a]));
 				elseif opcode == 10 then -- COUTNLRANGE
-					local v = "";
-					for idx = a, b do
-						v = v .. tostring(self.memory[idx]);
-					end
-					print(v);
+					print(concat(self.memory, false, a, b));
 				elseif opcode == 11 then -- COUTNLRANGESTR
-					local v = "";
-					for idx = a, b do
-						v = v .. string.char(self.memory[idx]);
-					end
-					print(v);
+					print(concat(self.memory, true, a, b));
 				elseif opcode == 12 then -- JMP
 					addpc(a);
 				elseif opcode == 13 then -- SETPC
@@ -99,31 +82,23 @@ function lmc:wrap(proto)
 				elseif opcode == 14 then -- RESETPC
 					setpc(0);
 				elseif opcode == 15 then -- HALT
-					yield(a);
+					os.execute("sleep " .. a);
 				elseif opcode == 16 then -- KILL
 					break;
 				elseif opcode == 17 then -- TESTLT
-					if not (self.memory[a] < self.memory[b]) then
-						addpc(c);
-					end
+					if not (self.memory[a] < self.memory[b]) then addpc(c); end
 				elseif opcode == 18 then -- TESTGT
-					if not (self.memory[a] > self.memory[b]) then
-						addpc(c);
-					end
+					if not (self.memory[a] > self.memory[b]) then addpc(c); end
 				elseif opcode == 19 then -- TESTLE
-					if not (self.memory[a] <= self.memory[b]) then
-						addpc(c);
-					end
+					if not (self.memory[a] <= self.memory[b]) then addpc(c); end
 				elseif opcode == 20 then -- TESTGE
-					if not (self.memory[a] >= self.memory[b]) then
-						addpc(c);
-					end
+					if not (self.memory[a] >= self.memory[b]) then addpc(c); end
 				elseif opcode == 21 then -- TESTEQ
-					if not (self.memory[a] == self.memory[b]) then
-						addpc(c);
-					end
+					if not (self.memory[a] == self.memory[b]) then addpc(c); end
 				elseif opcode == 22 then -- CALL
-					self:wrap(self:getProto(a))();
+					self:getProto(a).exec();
+				elseif opcode == 23 then -- RETURN
+					return table.move(self.memory, a, b, 1, {});
 				end
 			end
 		end
