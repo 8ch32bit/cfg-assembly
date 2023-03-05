@@ -1,66 +1,44 @@
-local instr =            require('lmcinstructions');
-local instruction_idx =  instr.instruction_idx;
-local instruction_tidx = instr.instruction_tidx;
+local instr =           require('lmcinstructions');
+local instruction_idx = instr.instruction_idx;
 
-local function isWhitespace(str) -- Excepting tabs
-	return str == " " or str == "\r" or str == "\n";
-end
-
-local function isNumber(str)
-	local byte = string.byte(str);
-	return byte >= 48 and byte <= 57;
-end
-
-local function isLetter(str)
-	local byte = string.byte(str);
-	return byte >= 97 and byte <= 122;
-end
+local function isNumber(str) return tonumber(str) ~= nil; end
+local function isLetter(str) return str:match("[a-z]") ~= nil; end
 
 local function getProtos(src)
 	src = src .. "\n";
 	local len =    #src;
 	local v =      0;
-	local function add(x)
-		v = v + (x or 1);
-	end
-	local function next()
-		add();
-		return string.sub(src, v, v);
-	end
+	local function add(x) v = v + (x or 1); end
+	local function next() add(); return string.sub(src, v, v); end
 	local function getLines()
 		local line = "";
 		local lines = {};
 		while true do
-			if v > len then
-				break;
-			end
+			if v > len then break; end
 			local sub = next();
 			if sub == "\n" then
-				if line ~= "" then
-					table.insert(lines, line);
-					line = "";
-				end
+				if line ~= "" then table.insert(lines, line); line = ""; end
 			else
 				line = line .. sub;
 			end
 		end
 		return lines;
 	end
-	local lines =        getLines();
-	local found =        false;
-	local proto =        {instructions = {}};
-	local protos =       {};
+	local lines =  getLines();
+	local found =  false;
+	local proto =  {instructions = {}};
+	local protos = {};
 	for idx = 1, #lines do
 		local line = lines[idx];
-		local last = string.sub(string.reverse(line), 1, 1);
-		local rest = string.reverse(string.sub(string.reverse(line), 2, #line));
+		local last = string.sub(line, -1);
+		local rest = string.sub(line, 1, -2);
 		if last == ":" then
 			if not found then
 				proto.name = rest;
-				found = true;
+				found =      true;
 			else
 				table.insert(protos, proto);
-				proto = {instructions = {}};
+				proto =      {instructions = {}};
 				proto.name = rest;
 			end
 		elseif last == ";" or last == "\n" then
@@ -87,9 +65,7 @@ local function parse(src)
 			local opFound =     false;
 			while true do
 				pos = pos + 1;
-				if pos > len or #new > 4 then
-					break;
-				end
+				if pos > len or #new > 4 then break; end
 				local sub = string.sub(instruction, pos, pos);
 				if isLetter(sub) then
 					pos = pos - 1;
@@ -97,9 +73,7 @@ local function parse(src)
 						local op = "";
 						while true do
 							pos = pos + 1;
-							if pos > len then
-								break;
-							end
+							if pos > len then break; end
 							local _sub = string.sub(instruction, pos, pos);
 							if isLetter(_sub) then
 								op = op .. _sub;
@@ -113,9 +87,7 @@ local function parse(src)
 						local arg = "";
 						while true do
 							pos = pos + 1;
-							if pos > len then
-								break;
-							end
+							if pos > len then break; end
 							local _sub = string.sub(instruction, pos, pos);
 							if isLetter(_sub) or isNumber(_sub) or _sub == "_" then
 								arg = arg .. _sub;
@@ -128,13 +100,12 @@ local function parse(src)
 				elseif isNumber(sub) then
 					pos = pos - 1;
 					local arg = "";
+					if string.sub(instruction, pos, pos) == "-" then arg = arg .. "-"; end
 					while true do
 						pos = pos + 1;
-						if pos > len then
-							break;
-						end
+						if pos > len then break; end
 						local _sub = string.sub(instruction, pos, pos);
-						if isNumber(_sub) or _sub == "-" or _sub == "." then
+						if isNumber(_sub) or _sub == "." then
 							arg = arg .. _sub;
 						else
 							break;
