@@ -22,6 +22,7 @@ local instruction_idx = {
 	["testge"] =         20,
 	["testeq"] =         21,
 	["call"] =           22,
+	["return"] =         23,
 };
 
 local instruction_tidx = {
@@ -48,6 +49,7 @@ local instruction_tidx = {
 	["testge"] =         3,
 	["testeq"] =         3,
 	["call"] =           1,
+	["return"] =         2,
 };
 
 return {instruction_idx = instruction_idx, instruction_tidx = instruction_tidx};
