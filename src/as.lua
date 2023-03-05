@@ -1,5 +1,5 @@
 local as = {};
-as.__index = lmc;
+as.__index = as;
 
 local null = "null";
 
