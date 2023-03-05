@@ -1,10 +1,10 @@
-local lmc = {};
-lmc.__index = lmc;
+local as = {};
+as.__index = lmc;
 
 local null = "null";
 
-function lmc.new(name, protos)
-	local self = setmetatable({name = name or "lmc-main", memory = {}, protos = protos or {}}, lmc);
+function as.new(name, protos)
+	local self = setmetatable({name = name or "as-main", memory = {}, protos = protos or {}}, lmc);
 	for idx = 1, #self.protos do
 		self.protos[idx].exec = self:wrap(self.protos[idx]);
 	end
@@ -14,15 +14,15 @@ function lmc.new(name, protos)
 	return self;
 end
 
-function lmc:deconstructInstruction(inst)
+function as:deconstructInstruction(inst)
 	return inst[1], inst[2] or null, inst[3] or null, inst[4] or null;
 end
 
-function lmc:instruction2String(inst)
+function as:instruction2String(inst)
 	return string.format("instruction: [opcode: %s, a: %s, b: %s, c: %s]", self:deconstructInstruction(inst));
 end
 
-function lmc:getProto(name)
+function as:getProto(name)
 	for idx = 1, #self.protos do
 		if self.protos[idx].name == name then return self.protos[idx]; end
 	end
@@ -37,7 +37,7 @@ local function concat(t, encode, a, b)
 	return s;
 end
 
-function lmc:wrap(proto)
+function as:wrap(proto)
 	proto = proto or self:getProto(proto) or self:getProto();
 	local instructions = proto.instructions;
 	local max = #instructions;
@@ -105,4 +105,4 @@ function lmc:wrap(proto)
 	end
 end
 
-return lmc;
+return as;
