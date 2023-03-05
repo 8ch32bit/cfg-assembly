@@ -1,4 +1,4 @@
-local instr =           require('lmcinstructions');
+local instr =           require('instructions');
 local instruction_idx = instr.instruction_idx;
 
 local function isNumber(str) return tonumber(str) ~= nil; end
@@ -111,7 +111,7 @@ local function parse(src)
 							break;
 						end
 					end
-					table.insert(new, tonumber(arg) or arg); --print(arg)
+					table.insert(new, tonumber(arg) or arg); -- print(arg)
 				end
 			end
 			instructions[_idx] = new;
