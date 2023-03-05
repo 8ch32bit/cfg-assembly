@@ -4,7 +4,7 @@ as.__index = as;
 local null = "null";
 
 function as.new(name, protos)
-	local self = setmetatable({name = name or "as-main", memory = {}, protos = protos or {}}, lmc);
+	local self = setmetatable({name = name or "as-main", memory = {}, protos = protos or {}}, as);
 	for idx = 1, #self.protos do
 		self.protos[idx].exec = self:wrap(self.protos[idx]);
 	end
