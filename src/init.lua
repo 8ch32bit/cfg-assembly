@@ -1,18 +1,18 @@
-local lmc =        require('lmc');
+local as =        require('as');
 local readFile =   require('readFile');
-local lmc_parser = require('lmcparser');
+local parser = require('parser');
 
-local function newLMC(src, name)
+local function newAssembler(src, name)
 	return lmc.new(name, lmc_parser.parse(src));
 end
 
-local function newLMCFile(path, name)
-	return newLMC(readFile(path), name);
+local function newAssemblerFile(path, name)
+	return newAssembler(readFile(path), name);
 end
 
-local function wrap(_lmc)
-	local main = _lmc:getProto("main");
-	local setup = _lmc:getProto("setup");
+local function wrap(assembler)
+	local main = assembler:getProto("main");
+	local setup = assembler:getProto("setup");
 	return function()
 		if setup then
 			setup.exec();
@@ -22,11 +22,11 @@ local function wrap(_lmc)
 end
 
 local function wrapSrc(src, name)
-	return wrap(newLMC(src, name))
+	return wrap(newAssembler(src, name))
 end
 
 local function wrapFile(src, name)
-	return wrap(newLMCFile(src, name));
+	return wrap(newAssemblerFile(src, name));
 end
 
 return {wrap = wrap, wrapSrc = wrapSrc, wrapFile = wrapFile};
