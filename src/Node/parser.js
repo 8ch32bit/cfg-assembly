@@ -7,7 +7,7 @@ function parseNumber(src) {
 }
 
 const isNumber = function(src) {return parseNumber(src) != NaN;}
-const isLetter = function(src) {return src.match(/[a-z]/ != null;}
+const isLetter = function(src) {return src.match(/[a-z]/) != null;}
 
 function getProtos(src) {
 	src = src + "\n";
@@ -50,3 +50,74 @@ function getProtos(src) {
 	}
 	return protos;
 }
+
+function parse(src) {
+	var protos = getProtos(src);
+	for (var idx = 0; idx < protos.length; idx++) {
+		var proto =        protos[idx];
+		var name =         proto.name;
+		var instructions = proto.instructions;
+		for (var _idx = 0; _idx < instructions.length; _idx++) {
+			var instruction = instructions[_idx];
+			var _new =        [];
+			var len =         instruction.length;
+			var pos =         0;
+			var opFound =     false;
+			while(true) {
+				pos++;
+				if (pos > len || _new > 4) break;
+				const sub = instruction.slice(pos - 1, pos);
+				if (isLetter(sub)) {
+					pos--;
+					if (!opFound) {
+						var op = "";
+						while(true) {
+							pos++;
+							if (pos > len) break;
+							const _sub = instruction.slice(pos - 1, pos);
+							if (isLetter(_sub)) {
+								op = op + sub;
+							} else {
+								break;
+							}
+						}
+						opFound = true;
+						_new[1] = instruction_idx[op];
+					} else {
+						var arg = "";
+						while(true) {
+							pos++;
+							if (pos > len) break;
+							const _sub = instruction.slice(pos - 1, pos);
+							if (isLetter(_sub) || isNumber(_sub) || _sub === "_") {
+								arg = arg + sub;
+							} else {
+								break;
+							}
+						}
+						_new[_new.length] = arg;
+					}
+				} else if (isNumber(sub)) {
+					pos--;
+					if (instruction.slice(pos - 1, pos) === "-") arg = arg .. "-";
+					var arg = "";
+					while(true) {
+						pos++;
+						if (pos > len) break;
+						const _sub = instruction.slice(pos - 1, pos);
+						if (isNumber(_sub) || _sub === ".") {
+							arg = arg + sub;
+						} else {
+							break;
+						}
+					}
+					_new[_new.length] = parseNumber(arg);
+				}
+			}
+			instructions[_idx] = _new;
+		}
+	}
+	return protos;
+}
+
+module.exports = {parse: parse};
