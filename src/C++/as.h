@@ -8,6 +8,7 @@ using std::string;
 using std::map;
 
 typedef void PROTO;
+typedef map<uint8_t, PROTO> PROTO_LIST;
 
 typedef struct INSTRUCTION {
 	uint8_t op;
@@ -18,10 +19,11 @@ typedef struct INSTRUCTION {
 
 typedef struct AS {
 	string name;
-	map<uint8_t, PROTO> protos;
+	PROTO_LIST protos;
 }
 
 namespace as {
+	const AS newAs(string name, PROTO_LIST *protos);
 	const string instruction2String(INSTRUCTION *inst);
 	const PROTO getProto(string *name);
 	const void wrap(PROTO *proto);
