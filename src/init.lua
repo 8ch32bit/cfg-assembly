@@ -1,9 +1,9 @@
-local as =        require('as');
-local readFile =   require('readFile');
-local parser = require('parser');
+local as       = require('as');
+local readFile = require('readFile');
+local parser   = require('parser');
 
 local function newAssembler(src, name)
-	return lmc.new(name, lmc_parser.parse(src));
+	return as.new(name, lmc_parser.parse(src));
 end
 
 local function newAssemblerFile(path, name)
