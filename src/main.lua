@@ -1,4 +1,4 @@
-local LMC = require('init');
-local exec = LMC.wrapFile("example.lmc");
+local as = require('init');
+local exec = as.wrapFile("example.lmc");
 
 exec();
