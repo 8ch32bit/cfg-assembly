@@ -1,8 +1,4 @@
-const exec = require('child_process').exec;
-
-async function _sleep(time) {
-	await new Promise(() => resolve(0), time);
-}
+const { exec } = require('child_process');
 
 function sleep(time) {
 	exec(`sleep ${time}`);
