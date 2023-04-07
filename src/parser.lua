@@ -2,7 +2,7 @@ local instr =           require('instructions');
 local instruction_idx = instr.instruction_idx;
 
 local function isNumber(str) return tonumber(str) ~= nil; end
-local function isLetter(str) return str:match("[a-z]") ~= nil; end
+local function isLetter(str) return string.match(str, "[a-z]") ~= nil; end
 
 local function getProtos(src)
 	src = src .. "\n";
