@@ -13,10 +13,12 @@ end
 local function wrap(assembler)
 	local main = assembler:getProto("main");
 	local setup = assembler:getProto("setup");
+	
 	return function()
 		if setup then
 			setup.exec();
 		end
+		
 		return main.exec();
 	end
 end
