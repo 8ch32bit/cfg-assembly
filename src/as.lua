@@ -39,6 +39,7 @@ end
 
 local function concat(t, encode, a, b)
 	a = a or 1; b = b or #t;
+	
 	local s = encode and "" or table.concat(t, "", a, b);
 	
 	for idx = a, b do
@@ -57,8 +58,13 @@ function as:wrap(proto)
 	return function()
 		local pc = 0;
 		
-		local function setpc(x) pc = x; end
-		local function addpc(x)	pc = pc + (x or 1); end
+		local function setpc(x)
+			pc = x;
+		end
+		
+		local function addpc(x)
+			pc = pc + (x or 1);
+		end
 		
 		while true do
 			addpc();
@@ -99,7 +105,7 @@ function as:wrap(proto)
 				elseif opcode == 14 then -- RESETPC
 					setpc(0);
 				elseif opcode == 15 then -- HALT
-					os.execute("sleep " .. a);
+					os.execute("sleep " .. a); -- wont work on every lua platform (for obvious reasons)
 				elseif opcode == 16 then -- KILL
 					break;
 				elseif opcode == 17 then -- TESTLT
