@@ -4,13 +4,20 @@ as.__index = as;
 local null = "null";
 
 function as.new(name, protos)
-	local self = setmetatable({name = name or "as-main", memory = {}, protos = protos or {}}, as);
+	local self = setmetatable({
+		name = name or "as-main",
+		memory = {},
+		protos = protos or {}
+	}, as);
+	
 	for idx = 1, #self.protos do
 		self.protos[idx].exec = self:wrap(self.protos[idx]);
 	end
+	
 	for idx = 0, 2048 do
 		self.memory[idx] = 0;
 	end
+	
 	return self;
 end
 
@@ -24,33 +31,43 @@ end
 
 function as:getProto(name)
 	for idx = 1, #self.protos do
-		if self.protos[idx].name == name then return self.protos[idx]; end
+		if self.protos[idx].name == name then
+			return self.protos[idx];
+		end
 	end
 end
 
 local function concat(t, encode, a, b)
 	a = a or 1; b = b or #t;
 	local s = encode and "" or table.concat(t, "", a, b);
+	
 	for idx = a, b do
 		s = s .. (encode and string.char(t[idx]) or "");
 	end
+	
 	return s;
 end
 
 function as:wrap(proto)
 	proto = proto or self:getProto(proto) or self:getProto();
+	
 	local instructions = proto.instructions;
 	local max = #instructions;
+	
 	return function()
 		local pc = 0;
+		
 		local function setpc(x) pc = x; end
 		local function addpc(x)	pc = pc + (x or 1); end
+		
 		while true do
 			addpc();
+			
 			if pc > max then
 				break;
 			else
 				local opcode, a, b, c = self:deconstructInstruction(instructions[pc]);
+				
 				if opcode == 0 then -- ADD
 					self.memory[a] = self.memory[b] + self.memory[c];
 				elseif opcode == 1 then -- SUB
