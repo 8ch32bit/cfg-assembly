@@ -3,7 +3,7 @@ local readFile = require('readFile');
 local parser   = require('parser');
 
 local function newAssembler(src, name)
-	return as.new(name, lmc_parser.parse(src));
+	return as.new(name, parser.parse(src));
 end
 
 local function newAssemblerFile(path, name)
