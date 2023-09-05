@@ -1,4 +1,4 @@
-local instruction_idx = require('instructions'.instruction_idx;
+local instruction_idx = require('instructions').instruction_idx;
 
 local function isNumber(str)
 	return tonumber(str) ~= nil;
