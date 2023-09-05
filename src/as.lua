@@ -4,17 +4,20 @@ as.__index = as;
 local null = "null";
 
 function as.new(name, protos)
-	local self = setmetatable({
-		name = name or "as-main",
-		memory = {},
-		protos = protos or {}
-	}, as);
+	local self = setmetatable(
+		{
+			name   = name or "as-main",
+			memory = {},
+			protos = protos or {}
+		},
+		as
+	);
 	
 	for idx = 1, #self.protos do
 		self.protos[idx].exec = self:wrap(self.protos[idx]);
 	end
 	
-	for idx = 0, 2048 do
+	for idx = 0, 2048 do -- Allocate some memory
 		self.memory[idx] = 0;
 	end
 	
@@ -66,63 +69,69 @@ function as:wrap(proto)
 			pc = pc + (x or 1);
 		end
 		
-		while true do
+		while pc <= max do
 			addpc();
 			
-			if pc > max then
-				break;
-			else
-				local opcode, a, b, c = self:deconstructInstruction(instructions[pc]);
+			local opcode, a, b, c = self:deconstructInstruction(instructions[pc]);
 				
-				if opcode == 0 then -- ADD
-					self.memory[a] = self.memory[b] + self.memory[c];
-				elseif opcode == 1 then -- SUB
-					self.memory[a] = self.memory[b] - self.memory[c];
-				elseif opcode == 2 then -- MUL
-					self.memory[a] = self.memory[b] * self.memory[c];
-				elseif opcode == 3 then -- DIV
-					self.memory[a] = math.floor(self.memory[b] / self.memory[c]);
-				elseif opcode == 4 then -- GET
-					self.memory[a] = self.memory[(b ~= null and b) or a];
-				elseif opcode == 5 then -- CLEAR
-					self.memory[a] = 0;
-				elseif opcode == 6 then -- MOVE
-					self.memory[a] = self.memory[b];
-				elseif opcode == 7 then -- SET
-					self.memory[a] = b;
-				elseif opcode == 8 then -- COUT
-					io.write(tostring(self.memory[a]));
-				elseif opcode == 9 then -- COUTNL
-					print(tostring(self.memory[a]));
-				elseif opcode == 10 then -- COUTNLRANGE
-					print(concat(self.memory, false, a, b));
-				elseif opcode == 11 then -- COUTNLRANGESTR
-					print(concat(self.memory, true, a, b));
-				elseif opcode == 12 then -- JMP
-					addpc(a);
-				elseif opcode == 13 then -- SETPC
-					setpc(a);
-				elseif opcode == 14 then -- RESETPC
-					setpc(0);
-				elseif opcode == 15 then -- HALT
-					os.execute("sleep " .. a); -- wont work on every lua platform (for obvious reasons)
-				elseif opcode == 16 then -- KILL
-					break;
-				elseif opcode == 17 then -- TESTLT
-					if not (self.memory[a] < self.memory[b]) then addpc(c); end
-				elseif opcode == 18 then -- TESTGT
-					if not (self.memory[a] > self.memory[b]) then addpc(c); end
-				elseif opcode == 19 then -- TESTLE
-					if not (self.memory[a] <= self.memory[b]) then addpc(c); end
-				elseif opcode == 20 then -- TESTGE
-					if not (self.memory[a] >= self.memory[b]) then addpc(c); end
-				elseif opcode == 21 then -- TESTEQ
-					if not (self.memory[a] == self.memory[b]) then addpc(c); end
-				elseif opcode == 22 then -- CALL
-					self:getProto(a).exec();
-				elseif opcode == 23 then -- RETURN
-					return table.move(self.memory, a, b, 1, {});
+			if opcode == 0 then -- ADD
+				self.memory[a] = self.memory[b] + self.memory[c];
+			elseif opcode == 1 then -- SUB
+				self.memory[a] = self.memory[b] - self.memory[c];
+			elseif opcode == 2 then -- MUL
+				self.memory[a] = self.memory[b] * self.memory[c];
+			elseif opcode == 3 then -- DIV
+				self.memory[a] = math.floor(self.memory[b] / self.memory[c]);
+			elseif opcode == 4 then -- GET
+				self.memory[a] = self.memory[(b ~= null and b) or a];
+			elseif opcode == 5 then -- CLEAR
+				self.memory[a] = 0;
+			elseif opcode == 6 then -- MOVE
+				self.memory[a] = self.memory[b];
+			elseif opcode == 7 then -- SET
+				self.memory[a] = b;
+			elseif opcode == 8 then -- COUT
+				io.write(tostring(self.memory[a]));
+			elseif opcode == 9 then -- COUTNL
+				print(tostring(self.memory[a]));
+			elseif opcode == 10 then -- COUTNLRANGE
+				print(concat(self.memory, false, a, b));
+			elseif opcode == 11 then -- COUTNLRANGESTR
+				print(concat(self.memory, true, a, b));
+			elseif opcode == 12 then -- JMP
+				addpc(a);
+			elseif opcode == 13 then -- SETPC
+				setpc(a);
+			elseif opcode == 14 then -- RESETPC
+				setpc(0);
+			elseif opcode == 15 then -- HALT
+				os.execute("sleep " .. a); -- wont work on every lua platform (for obvious reasons)
+			elseif opcode == 16 then -- KILL
+				break;
+			elseif opcode == 17 then -- TESTLT
+				if not (self.memory[a] < self.memory[b]) then
+					addpc(c);
 				end
+			elseif opcode == 18 then -- TESTGT
+				if not (self.memory[a] > self.memory[b]) then
+					addpc(c);
+				end
+			elseif opcode == 19 then -- TESTLE
+				if not (self.memory[a] <= self.memory[b]) then
+					addpc(c);
+				end
+			elseif opcode == 20 then -- TESTGE
+				if not (self.memory[a] >= self.memory[b]) then
+					addpc(c);
+				end
+			elseif opcode == 21 then -- TESTEQ
+				if not (self.memory[a] == self.memory[b]) then
+					addpc(c);
+				end
+			elseif opcode == 22 then -- CALL
+				self:getProto(a).exec();
+			elseif opcode == 23 then -- RETURN
+				return table.move(self.memory, a, b, 1, {});
 			end
 		end
 	end
