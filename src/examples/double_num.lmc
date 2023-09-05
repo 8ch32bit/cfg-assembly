@@ -1,0 +1,4 @@
+main:
+	set 0 25;
+	add 0 0 0;
+	coutnl 0;
