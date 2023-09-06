@@ -144,7 +144,7 @@ function Assembler:Wrap(proto: { [string]: any }?): () -> ()
 					Proto.Execute();
 				end;
 			elseif opcode == 23 then -- RETURN
-				return table.move(self.memory, a, b, 1, {});
+				return table.move(Memory, A, B, 1, {});
 			end;
 		end;
 
