@@ -1,3 +1,5 @@
+--!nonstrict
+
 local InstructionIndex: { [string]: number } = { -- String index to number index list
 	add            = 1,
 	sub            = 2,
