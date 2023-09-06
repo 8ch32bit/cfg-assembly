@@ -1,4 +1,7 @@
+--!nonstrict
+
 local Package: Folder = script.Parent;
+
 local InstructionIndex: { [string]: number } = require(Package:FindFirstChild("Instructions")).InstructionIndex;
 
 local function IsNumber(__string: string): (boolean)
@@ -52,7 +55,7 @@ local function GetProtos(source: string): { { [string]: unknown } }
 	local Protos: { { [string]: unknown } } = {};
 
 	local Proto: { [string]: unknown } = {
-		Instructions = {}
+		Instructions = {},
 	};
 
 	local LineAmount = #Lines;
@@ -125,28 +128,24 @@ local function Parse(source: string): { { [string]: unknown } }
 						end
 						
 						OpFound = true;
-						New[1] = InstructionIdx[Op];
+						table.insert(New, InstructionIdx[Op]);
 					else
 						local Arg = "";
 						
 						while Position <= Length do
 							Position += 1;
 							
-							if pos > len then
-								break;
-							end
-							
 							local __Substring: string = string.sub(Instruction, Position, Position);
 							
-							if IsLetter(_sub) or IsNumber(_sub) or _sub == "_" then
+							if IsLetter(__Substring) or IsNumber(__Substring) or __Substring == "_" then
 								Op = `{Op}{__Substring}`;
 							else
 								break;
-							end
-						end
+							end;
+						end;
 						
-						table.insert(new, arg);
-					end
+						table.insert(New, Arg);
+					end;
 				elseif IsNumber(sub) then
 					Position -= 1;
 					
@@ -154,33 +153,31 @@ local function Parse(source: string): { { [string]: unknown } }
 					
 					if string.sub(Instruction, Position, Position) == "-" then
 						Arg = `{Arg}-`;
-					end
+					end;
 					
-					while true do
+					while Position <= Length do
 						Position += 1;
 						
-						if pos > len then
-							break;
-						end
+						local __Substring = string.sub(Instruction, Position, Position);
 						
-						local _sub = string.sub(instruction, pos, pos);
-						
-						if isNumber(_sub) or _sub == "." then
-							arg = arg .. _sub;
+						if IsNumber(__Substring) or __Substring == "." then
+							Arg = `{Arg}{__Substring}`;
 						else
 							break;
-						end
-					end
+						end;
+					end;
+
+					Arg = tonumber(Arg) or ARg;
 					
-					table.insert(new, tonumber(arg) or arg); -- print(arg)
-				end
-			end
+					table.insert(New, Arg);
+				end;
+			end;
 			
-			instructions[_idx] = new;
-		end
-	end
+			Instructions[__Idx] = New;
+		end;
+	end;
 	
 	return protos;
-end
+end;
 
-return {parse = parse};
+return Parse;
