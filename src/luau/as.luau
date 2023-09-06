@@ -152,4 +152,9 @@ function Assembler:Wrap(proto: { [string]: any }?): () -> ()
 	end;
 end;
 
-return {Assembler = Assembler, DeconstructInstr = DeconstructInstr, InstructionToString = InstructionToString};
+return {
+	Assembler = Assembler :: {},
+
+	DeconstructInstr    = DeconstructInstr    :: ({ number }) -> (number, number?, number?, number?),
+	InstructionToString = InstructionToString :: ({ number }) -> (string),
+};
