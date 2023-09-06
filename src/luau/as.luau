@@ -1,17 +1,38 @@
 --!nonstrict
 
-local Assembler = {};
+local function DeconstructInstr(instr: { number }): (number, number?, number?, number?)
+	return inst[1], inst[2], inst[3], inst[4];
+end
+
+local function InstructionToString(instr: { number }): (string)
+	return `instruction: [opcode: {instr[1]}, a: {instr[2] or null}, b: {instr[3] or null}, c: {instr[4] or null}]`;
+end
+
+local function Concat(__table: {}, encode: boolean?, a: number?, b: number?): (string)
+	a = if a then a else 1;
+	b = if b then b else #__table;
+	
+	local String: string = encode and "" or table.concat(t, "", a, b);
+	
+	for Idx: number = a, b do
+		String = `{String}{if encode then string.char(__table[Idx]) else ""}`;
+	end;
+	
+	return String;
+end
+
+local Assembler: { [string]: any } = {};
 Assembler.__index = as;
 
 local null = "null";
 
-function Assembler.new(name: string, protos, memory): { [string]: any }
+function Assembler.new(name: string, protos: { [string]: any }?, memory: { number }?): { [string]: any }
 	local self: {} = setmetatable(
 		{
 			Name   = name or "as-main" :: string,
 			
 			Memory = memory or {} :: { number },
-			Protos = protos or {} :: { ,
+			Protos = protos or {} :: { [string]: any },
 		},
 		Assembler
 	);
@@ -27,117 +48,108 @@ function Assembler.new(name: string, protos, memory): { [string]: any }
 	return self;
 end
 
-function Assembler:DeconstructInstruction(inst: { number }): (number, number, number, number)
-	return inst[1], inst[2] or null, inst[3] or null, inst[4] or null;
-end
-
-function Assembler:InstructionToString(inst)
-	return string.format("instruction: [opcode: %s, a: %s, b: %s, c: %s]", self:deconstructInstruction(inst));
-end
-
-function as:GetProto(name: string)
+function Assembler:GetProto(name: string): { [string]: any }?
 	for _, Proto: { [string]: any } in self.Protos do
 		if Proto.Name == name then
-			return self.protos[idx];
-		end
-	end
+			return Proto;
+		end;
+	end;
 end
 
-local function concat(t, encode, a, b)
-	a = a or 1; b = b or #t;
+function Assembler:Wrap(proto: { [string]: any }?): () -> ()
+	proto = proto or self:GetProto();
 	
-	local s = encode and "" or table.concat(t, "", a, b);
+	local Instructions: { { number } } = proto.Instructions;
+				
+	local Max: number = #Instructions;
 	
-	for idx = a, b do
-		s = s .. (encode and string.char(t[idx]) or "");
-	end
-	
-	return s;
-end
+	return function(): {}
+		local PC: number = 0;
+		
+		local function SetPC(x: number): ()
+			PC = x;
+		end;
+		
+		local function AddPC(x: number): ()
+			PC += x;
+		end;
 
-function as:wrap(proto)
-	proto = proto or self:getProto(proto) or self:getProto();
-	
-	local instructions = proto.instructions;
-	local max = #instructions;
-	
-	return function()
-		local pc = 0;
+		local Memory: { number } = self.Memory;
 		
-		local function setpc(x)
-			pc = x;
-		end
-		
-		local function addpc(x)
-			pc = pc + (x or 1);
-		end
-		
-		while pc <= max do
-			addpc();
+		while PC <= Max do
+			AddPC(1);
 			
-			local opcode, a, b, c = self:deconstructInstruction(instructions[pc]);
+			local Opcode: number, A: number, B: number, C: number = DeconstructInstr(Instructions[PC]);
 				
 			if opcode == 0 then -- ADD
-				self.memory[a] = self.memory[b] + self.memory[c];
+				Memory[A] = Memory[B] + Memory[C];
 			elseif opcode == 1 then -- SUB
-				self.memory[a] = self.memory[b] - self.memory[c];
+				Memory[A] = Memory[B] - Memory[C];
 			elseif opcode == 2 then -- MUL
-				self.memory[a] = self.memory[b] * self.memory[c];
+				Memory[A] = Memory[B] * Memory[C];
 			elseif opcode == 3 then -- DIV
-				self.memory[a] = math.floor(self.memory[b] / self.memory[c]);
+				Memory[A] = Memory[B] / Memory[C];
 			elseif opcode == 4 then -- GET
-				self.memory[a] = self.memory[(b ~= null and b) or a];
+				local Index: number = if B ~= null then B else A;
+				
+				Memory[A] = Memory[Index];
 			elseif opcode == 5 then -- CLEAR
-				self.memory[a] = 0;
+				Memory[A] = 0;
 			elseif opcode == 6 then -- MOVE
-				self.memory[a] = self.memory[b];
+				Memory[A] = Memory[B];
 			elseif opcode == 7 then -- SET
-				self.memory[a] = b;
+				Memory[A] = B;
 			elseif opcode == 8 then -- COUT
-				io.write(tostring(self.memory[a]));
+				print(Memory[A]);
 			elseif opcode == 9 then -- COUTNL
-				print(tostring(self.memory[a]));
+				print(Memory[A]);
 			elseif opcode == 10 then -- COUTNLRANGE
-				print(concat(self.memory, false, a, b));
+				print(concat(Memory, false, a, b));
 			elseif opcode == 11 then -- COUTNLRANGESTR
-				print(concat(self.memory, true, a, b));
+				print(concat(Memory, true, a, b));
 			elseif opcode == 12 then -- JMP
-				addpc(a);
+				AddPC(A);
 			elseif opcode == 13 then -- SETPC
-				setpc(a);
+				SetPC(A);
 			elseif opcode == 14 then -- RESETPC
-				setpc(0);
+				SetPC(0);
 			elseif opcode == 15 then -- HALT
-				os.execute("sleep " .. a); -- wont work on every lua platform (for obvious reasons)
+				task.wait(A);
 			elseif opcode == 16 then -- KILL
 				break;
 			elseif opcode == 17 then -- TESTLT
-				if not (self.memory[a] < self.memory[b]) then
-					addpc(c);
+				if not (Memory[A] < Memory[B]) then
+					AddPC(C);
 				end
 			elseif opcode == 18 then -- TESTGT
-				if not (self.memory[a] > self.memory[b]) then
-					addpc(c);
+				if not (Memory[A] > Memory[B]) then
+					AddPC(C);
 				end
 			elseif opcode == 19 then -- TESTLE
-				if not (self.memory[a] <= self.memory[b]) then
-					addpc(c);
+				if not (Memory[A] <= Memory[B]) then
+					AddPC(C);
 				end
 			elseif opcode == 20 then -- TESTGE
-				if not (self.memory[a] >= self.memory[b]) then
-					addpc(c);
+				if not (Memory[A] >= Memory[B]) then
+					AddPC(C);
 				end
 			elseif opcode == 21 then -- TESTEQ
 				if not (self.memory[a] == self.memory[b]) then
-					addpc(c);
+					AddPC(C);
 				end
 			elseif opcode == 22 then -- CALL
-				self:getProto(a).exec();
+				local Proto = self:GetProto(A);
+
+				if Proto then
+					Proto:Execute();
+				end;
 			elseif opcode == 23 then -- RETURN
 				return table.move(self.memory, a, b, 1, {});
-			end
-		end
-	end
-end
+			end;
+		end;
 
-return as;
+		return {};
+	end;
+end;
+
+return {Assembler = Assembler, DeconstructInstr = DeconstructInstr, InstructionToString = InstructionToString};
