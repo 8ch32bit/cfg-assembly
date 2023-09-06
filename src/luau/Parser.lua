@@ -28,28 +28,23 @@ local function GetProtos(source: string): { { [string]: unknown } }
 		return string.sub(source, Position, Position);
 	end;
 	
-	local function getLines()
-		local Line:  string     = "";
-		local Lines: { string } = {};
+	local Line:  string     = "";
+	local Lines: { string } = {};
 		
-		while Position <= Length do
-			local Substring: string = Next();
+	while Position <= Length do
+		local Substring: string = Next();
 			
-			if Substring == "\n" then
-				if Line ~= "" then
-					table.insert(Lines, Line);
-					
-					Line = "";
-				end
-			else
-				Line = `{Line}{Sub}`;
-			end;
+		if Substring == "\n" then
+			if Line ~= "" then
+				table.insert(Lines, Line);
+				
+				Line = "";
+			end
+		else
+			Line = `{Line}{Sub}`;
 		end;
-		
-		return lines;
 	end;
-	
-	local Lines: { string } = Lines();
+		
 	local Found: boolean    = false;
 	
 	local Protos: { { [string]: unknown } } = {};
@@ -88,13 +83,13 @@ local function GetProtos(source: string): { { [string]: unknown } }
 	return Protos;
 end;
 
-local function Parse(source: string): { { [string]: unknown } }
-	local Protos: { { [string]: unknown } } = GetProtos(source);
+local function Parse(source: string): { { [string]: any } }
+	local Protos: { { [string]: any } } = GetProtos(source);
 	
 	for Idx: number, Proto in Lines do
 		local Name: string = Proto.Name;
 		
-		local Instructions: { [string]: unknown } = Proto.Instructions;
+		local Instructions: { string } = Proto.Instructions;
 		
 		for __Idx, Instruction: string in Instructions do
 			local Length: number = #instruction;
