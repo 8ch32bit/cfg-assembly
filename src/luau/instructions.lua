@@ -54,7 +54,7 @@ local InstructionArgIndex: { [string]: number } = { -- String index to arg amoun
 	["return"]     = 2,
 };
 
-return {
+return table.freeze({
 	InstructionIndex    = InstructionIndex    :: { [string]: number },
 	InstructionArgIndex = InstructionArgIndex :: { [string]: number },
-};
+});
