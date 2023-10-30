@@ -1,5 +1,12 @@
 --!nonstrict
 
+type Proto = { [string]: any };
+
+type Instr      = { number };
+type MemoryList = { number };
+type ProtoList  = { [string]: Proto };
+type Assembler  = { [string]: any };
+
 local TypeDefs = require(script.Parent.TypeDefs);
 
 local function DeconstructInstr(instr: Instr): (number, number?, number?, number?)
@@ -23,18 +30,17 @@ local function Concat(__table: {}, encode: boolean?, a: number?, b: number?): (s
 	return String;
 end;
 
-local Assembler: { [string]: any } = {};
+local Assembler = {};
 Assembler.__index = as;
 
 local null = "null";
 
-function Assembler.new(name: string, protos: { [string]: any }?, memory: { number }?): { [string]: any }
-	local self: {} = setmetatable(
+function Assembler.new(name: string, protos: ProtoList?, memory: MemList?): (Assembler)
+	local self: Assembler = setmetatable(
 		{
-			Name   = name or "as-main" :: string,
-			
-			Memory = memory or {} :: { number },
-			Protos = protos or {} :: { [string]: any },
+			Name   = (if name then name else "as-main") :: string,
+			Memory = (if memory then memory else {})    :: MemoryList,
+			Protos = (if protos then protos else {})    :: ProtoList,
 		},
 		Assembler
 	);
