@@ -5,7 +5,7 @@ type Proto = { [string]: any };
 type Instr      = { number };
 type MemoryList = { number };
 type ProtoList  = { [string]: Proto };
-type Assembler  = { [string]: any };
+type Assembler  = { Name: string, Memory: MemoryList };
 
 local TypeDefs = require(script.Parent.TypeDefs);
 
@@ -45,7 +45,7 @@ function Assembler.new(name: string, protos: ProtoList?, memory: MemList?): (Ass
 		Assembler
 	);
 	
-	for _, Proto: { [string]: any } in self.Protos do
+	for _, Proto: Proto in self.Protos do
 		Proto.Execute = self:Wrap(Proto);
 	end;
 	
@@ -56,15 +56,15 @@ function Assembler.new(name: string, protos: ProtoList?, memory: MemList?): (Ass
 	return self;
 end
 
-function Assembler:GetProto(name: string): { [string]: any }?
-	for _, Proto: { [string]: any } in self.Protos do
+function Assembler:GetProto(name: string): Proto?
+	for _, Proto: Proto in self.Protos do
 		if Proto.Name == name then
 			return Proto;
 		end;
 	end;
 end
 
-function Assembler:Wrap(proto: { [string]: any }?): () -> ()
+function Assembler:Wrap(proto: Proto?): () -> ()
 	proto = proto or self:GetProto();
 	
 	local Instructions: { { number } } = proto.Instructions;
@@ -82,7 +82,7 @@ function Assembler:Wrap(proto: { [string]: any }?): () -> ()
 			PC += x;
 		end;
 
-		local Memory: { number } = self.Memory;
+		local Memory: MemoryList = self.Memory;
 		
 		while PC <= Max do
 			AddPC(1);
