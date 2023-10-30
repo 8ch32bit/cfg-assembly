@@ -1,25 +1,27 @@
 --!nonstrict
 
-local function DeconstructInstr(instr: { number }): (number, number?, number?, number?)
+local TypeDefs = require(script.Parent.TypeDefs);
+
+local function DeconstructInstr(instr: Instr): (number, number?, number?, number?)
 	return inst[1], inst[2], inst[3], inst[4];
 end
 
-local function InstructionToString(instr: { number }): (string)
+local function InstructionToString(instr: Instr): (string)
 	return `instruction: [opcode: {instr[1]}, a: {instr[2] or null}, b: {instr[3] or null}, c: {instr[4] or null}]`;
 end
 
-local function Concat(__table: {}, encode: boolean?, a: number?, b: number?): (string)
+local function Concat(__table: {}, encode: boolean?, a: number?, b: number?): (string) -- Concat function with encodability
 	a = if a then a else 1;
 	b = if b then b else #__table;
 	
-	local String: string = encode and "" or table.concat(t, "", a, b);
+	local String: string = if encode then "" else table.concat(t, "", a, b);
 	
 	for Idx: number = a, b do
 		String = `{String}{if encode then string.char(__table[Idx]) else ""}`;
 	end;
 	
 	return String;
-end
+end;
 
 local Assembler: { [string]: any } = {};
 Assembler.__index = as;
