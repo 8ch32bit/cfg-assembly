@@ -1,180 +1,154 @@
-local instruction_idx = require('instructions').instruction_idx;
+-- 8ch_32bit
 
-local function isNumber(str)
-	return tonumber(str) ~= nil;
-end
+local string = string;
+local table = table;
 
-local function isLetter(str)
-	return string.match(str, "[a-z]") ~= nil;
-end
+local InstructionIdx = require('Instructions').InstructionIdx;
 
-local function getProtos(src)
-	src = src .. "\n";
+local function Parse(Source)
+	if not Source then
+		return;
+	end;
 	
-	local len = #src;
-	local v   = 0;
+	Source = Source .. "\n";
+
+	local Found        = false;
+	local Proto        = {};
+	local Instructions = {};
+	local Protos       = {};
+	local Lines        = {};
 	
-	local function add(x)
-		v = v + (x or 1);
-	end
+	local Length   = #Source;
+	local Position = 0;
 	
-	local function next()
-		add();
+	local CurrentLine = "";
 		
-		return string.sub(src, v, v); 
-	end
-	
-	local function getLines()
-		local line = "";
-		local lines = {};
-		
-		while true do
-			if v > len then
-				break;
-			end
+	while Position <= Length do
+		Position = Position + 1;
+		local Substring = string.sub(Source, Position, Position);
 			
-			local sub = next();
-			
-			if sub == "\n" then
-				if line ~= "" then table.insert(lines, line); line = ""; end
-			else
-				line = line .. sub;
-			end
-		end
-		
-		return lines;
-	end
-	
-	local lines  = getLines();
-	local found  = false;
-	local proto  = {instructions = {}};
-	local protos = {};
-	
-	for idx = 1, #lines do
-		local line = lines[idx];
-		
-		local last = string.sub(line, -1);
-		local rest = string.sub(line, 1, -2);
-		
-		if last == ":" then
-			if not found then
-				proto.name = rest;
-				found      = true;
-			else
-				table.insert(protos, proto);
+		if CurrentLine ~= "" and Substring == "\n" then
+			CurrentLine = CurrentLine .. Substring;
+		else
+			table.insert(Lines, CurrentLine);
 				
-				proto      = {instructions = {}};
-				proto.name = rest;
-			end
-		elseif last == ";" or last == "\n" then
-			table.insert(proto.instructions, rest);
-		end
-		
-		if idx == #lines then
-			table.insert(protos, proto);
-		end
-	end
-	
-	return protos;
-end
+			CurrentLine = "";
+		end;
+	end;
 
-local function parse(src)
-	local protos = getProtos(src);
+	local LineCount = #Lines;
 	
-	for idx = 1, #protos do
-		local proto        = protos[idx];
-		local name         = proto.name;
-		local instructions = proto.instructions;
+	for Idx = 1, LineCount, 1 do
+		local Line = Lines[Idx];
+		
+		local Last = string.sub(Line, -1);
+		local Rest = string.sub(Line, 1, -2);
+
+		if Last == ";" or Last == "\n" then
+			table.insert(Instructions, string.lower(Rest));
+		end;
+		
+		if Last == ":" then
+			if not Found then
+				Proto.Name = Rest;
+				Found      = true;
+			else
+				Proto.Instructions = Instructions;
+				table.insert(Protos, Proto);
+				
+				Proto        = { Name = Rest };
+				Instructions = {};
+			end;
+		end;
+		
+		if Idx == LineCount then
+			Proto.Instructions = Instructions;
+			table.insert(Protos, Proto);
+		end;
+	end;
+	
+	local ProtoCount = #Protos;
+	
+	for Idx = 1, ProtoCount, 1 do
+		local Proto        = Protos[idx];
+		local Name         = Proto.Name;
+		local Instructions = Proto.Instructions;
+		local InstrCount   = #Instructions
+		
 		for _idx = 1, #instructions do
-			local instruction = instructions[_idx];
-			local len         = #instruction;
+			local Instruction = Instructions[_idx];
+			local Length      = #Instruction;
+			local Position    = 0;
+			local New         = {};
 			
-			local new = {};
-			local pos = 0;
+			local OpcodeFound = false;
 			
-			local opFound = false;
-			
-			while true do
-				pos = pos + 1;
+			while Position <= Length do
+				Position = Position + 1;
 				
-				if pos > len or #new > 4 then
-					break;
-				end
+				local Substring = string.sub(Instruction, Position, Position);
 				
-				local sub = string.sub(instruction, pos, pos);
-				
-				if isLetter(sub) then
-					pos = pos - 1;
+				if string.find(Substring, "[a-z]") then
+					Position = Position - 1;
 					
-					if not opFound then
-						local op = "";
+					if OpcodeFound then
+						local Arg = "";
 						
-						while true do
-							pos = pos + 1;
+						while Position <= Length do
+							Position = Position + 1;
+							local Substring2 = string.sub(Instruction, Position, posPosition
 							
-							if pos > len then
-								break;
-							end
-							
-							local _sub = string.sub(instruction, pos, pos);
-							
-							if isLetter(_sub) then
-								op = op .. _sub;
+							if string.find(Substring2, "[a-z]") or tonumber(Substring2) or Substring2 == "_" then
+								Arg = Arg .. Substring2;
 							else
 								break;
-							end
-						end
+							end;
+						end;
 						
-						opFound = true;
-						new[1] = instruction_idx[op];
+						table.insert(New, Arg);
 					else
-						local arg = "";
+						local Opcode = "";
 						
-						while true do
-							pos = pos + 1;
+						while Position <= Length do
+							Position = Position + 1;
+							local Substring2 = string.sub(Instruction, Position, Position);
 							
-							if pos > len then
-								break;
-							end
-							
-							local _sub = string.sub(instruction, pos, pos);
-							
-							if isLetter(_sub) or isNumber(_sub) or _sub == "_" then
-								arg = arg .. _sub;
+							if isLetter(Substring2) then
+								Opcode = Opcode .. _sub;
 							else
 								break;
-							end
-						end
+							end;
+						end;
 						
-						table.insert(new, arg);
+						OpcodeFound = true;
+						New[1] = InstructionIdx[Opcode];
+					end;
+				elseif tonumber(Substring) then
+					Position = Position - 1;
+					
+					local Arg = "";
+					
+					if string.sub(Instruction, Position, Position) == "-" then
+						Arg = Arg .. "-";
 					end
-				elseif isNumber(sub) then
-					pos = pos - 1;
 					
-					local arg = "";
-					
-					if string.sub(instruction, pos, pos) == "-" then
-						arg = arg .. "-";
-					end
-					
-					while true do
-						pos = pos + 1;
+					while Position <= Length do
+						Position = Position + 1;
+						local Substring2 = string.sub(Instruction, Position, Position);
 						
-						if pos > len then
-							break;
-						end
-						
-						local _sub = string.sub(instruction, pos, pos);
-						
-						if isNumber(_sub) or _sub == "." then
-							arg = arg .. _sub;
+						if tonumber(Substring2) or Substring2 == "." then
+							Arg = Arg .. Substring2;
 						else
 							break;
-						end
-					end
+						end;
+					end;
 					
-					table.insert(new, tonumber(arg) or arg); -- print(arg)
-				end
+					table.insert(New, tonumber(Arg) or Arg);
+				end;
+
+				if #New > 4 then
+					break;
+				end;
 			end
 			
 			instructions[_idx] = new;
@@ -182,6 +156,6 @@ local function parse(src)
 	end
 	
 	return protos;
-end
+end;
 
 return {parse = parse};
