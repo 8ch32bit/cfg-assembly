@@ -1,4 +1,4 @@
-local instruction_idx = { -- String index to number index list
+local InstructionIdx = { -- String index to number index list
 	["add"] =            0,
 	["sub"] =            1,
 	["mul"] =            2,
@@ -25,7 +25,7 @@ local instruction_idx = { -- String index to number index list
 	["return"] =         23,
 };
 
-local instruction_tidx = { -- String index to arg amount list
+local InstructionsArgIdx = { -- String index to arg amount list
 	["add"] =            3,
 	["sub"] =            3,
 	["mul"] =            3,
@@ -52,4 +52,4 @@ local instruction_tidx = { -- String index to arg amount list
 	["return"] =         2,
 };
 
-return {instruction_idx = instruction_idx, instruction_tidx = instruction_tidx};
+return {InstructionIdx = InstructionIdx, InstructionsArgIdx = InstructionsArgIdx};
