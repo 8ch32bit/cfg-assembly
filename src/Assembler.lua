@@ -6,10 +6,6 @@ local io     = io;
 local os     = os;
 local print  = print;
 
-local function Instruction2String(inst)
-	return string.format("instruction: [opcode: %s, a: %s, b: %s, c: %s]", Instr[1], Instr[2] or null, Instr[3] or null, Instr[4] or null);
-end;
-
 local function Concat(Table, Encode, A, B) -- Concat function that can do ascii chars
 	A = A or 1;
 	B = B or #Table;
