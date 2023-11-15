@@ -1,140 +1,156 @@
-local as = {};
-as.__index = as;
-
 local null = "null";
 
-function as.new(name, protos)
-	local self = setmetatable(
-		{
-			name   = name or "as-main",
-			memory = {},
-			protos = protos or {}
-		},
-		as
-	);
+local table  = table;
+local string = string;
+local io     = io;
+local os     = os;
+local print  = print;
+
+local function Instruction2String(inst)
+	return string.format("instruction: [opcode: %s, a: %s, b: %s, c: %s]", Instr[1], Instr[2] or null, Instr[3] or null, Instr[4] or null);
+end;
+
+local function Concat(Table, Encode, A, B) -- Concat function that can do ascii chars
+	A = A or 1;
+	B = B or #Table;
+
+	if not Encode then
+		return table.concat(Table, "", A, B);
+	end;
+
+	local String = "";
 	
-	for idx = 1, #self.protos do
-		self.protos[idx].exec = self:wrap(self.protos[idx]);
-	end
+	for Idx = A, B do
+		String = String .. (encode and string.char(Table[idx]) or "");
+	end;
+
+	return String;
+end;
+
+local Assembler = {};
+Assembler.__index = as;
+
+function Assembler.new(Name, Protos, AllocSize)
+	local self = setmetatable({}, Assembler);
 	
-	for idx = 0, 2048 do -- Allocate some memory
-		self.memory[idx] = 0;
-	end
+	Protos = Protos or {};
+
+	self.Name = Name or "as-main";
+	
+	local Memory = table.create(AllocSize or 1024);
+
+	self.Memory = Memory;
+	self.Protos = Protos;
+	
+	for Idx = 1, Protos do
+		local Proto = Protos[Idx];
+		
+		Proto.Execute = self:WrapProto(Proto);
+	end;
 	
 	return self;
-end
+end;
 
-function as:deconstructInstruction(inst)
-	return inst[1], inst[2] or null, inst[3] or null, inst[4] or null;
-end
-
-function as:instruction2String(inst)
-	return string.format("instruction: [opcode: %s, a: %s, b: %s, c: %s]", self:deconstructInstruction(inst));
-end
-
-function as:getProto(name)
-	for idx = 1, #self.protos do
-		if self.protos[idx].name == name then
-			return self.protos[idx];
-		end
-	end
-end
-
-local function concat(t, encode, a, b)
-	a = a or 1; b = b or #t;
+function Assembler:GetProto(Name)
+	local Protos = self.Protos;
+	local Amount = #Protos;
 	
-	local s = encode and "" or table.concat(t, "", a, b);
-	
-	for idx = a, b do
-		s = s .. (encode and string.char(t[idx]) or "");
-	end
-	
-	return s;
-end
-
-function as:wrap(proto)
-	proto = proto or self:getProto(proto) or self:getProto();
-	
-	local instructions = proto.instructions;
-	local max = #instructions;
-	
-	return function()
-		local pc = 0;
+	for Idx = 1, Amount do
+		local Proto = Protos[Idx];
 		
-		local function setpc(x)
-			pc = x;
-		end
+		if Proto.Name == Name then
+			return Proto;
+		end;
+	end;
+end;
+
+function Assembler:WrapProto(Proto)
+	Proto = Proto or self:GetProto();
+
+	local Memory       = self.Memory;
+	local Instructions = Proto.Instructions;
+	local Limit        = #Instructions;
+	
+	local function Execute()
+		local PC = 0;
 		
-		local function addpc(x)
-			pc = pc + (x or 1);
-		end
-		
-		while pc <= max do
-			addpc();
-			
-			local opcode, a, b, c = self:deconstructInstruction(instructions[pc]);
+		while PC <= Limit do
+			PC = PC + 1;
+
+			local Instr = Instructions[PC];
 				
-			if opcode == 0 then -- ADD
-				self.memory[a] = self.memory[b] + self.memory[c];
-			elseif opcode == 1 then -- SUB
-				self.memory[a] = self.memory[b] - self.memory[c];
-			elseif opcode == 2 then -- MUL
-				self.memory[a] = self.memory[b] * self.memory[c];
-			elseif opcode == 3 then -- DIV
-				self.memory[a] = math.floor(self.memory[b] / self.memory[c]);
-			elseif opcode == 4 then -- GET
-				self.memory[a] = self.memory[(b ~= null and b) or a];
-			elseif opcode == 5 then -- CLEAR
-				self.memory[a] = 0;
-			elseif opcode == 6 then -- MOVE
-				self.memory[a] = self.memory[b];
-			elseif opcode == 7 then -- SET
-				self.memory[a] = b;
-			elseif opcode == 8 then -- COUT
-				io.write(tostring(self.memory[a]));
-			elseif opcode == 9 then -- COUTNL
-				print(tostring(self.memory[a]));
-			elseif opcode == 10 then -- COUTNLRANGE
-				print(concat(self.memory, false, a, b));
-			elseif opcode == 11 then -- COUTNLRANGESTR
-				print(concat(self.memory, true, a, b));
-			elseif opcode == 12 then -- JMP
-				addpc(a);
-			elseif opcode == 13 then -- SETPC
-				setpc(a);
-			elseif opcode == 14 then -- RESETPC
-				setpc(0);
-			elseif opcode == 15 then -- HALT
-				os.execute("sleep " .. a); -- wont work on every lua platform (for obvious reasons)
-			elseif opcode == 16 then -- KILL
+			if OpCode == 0 then -- ADD
+				Memory[Instr[2]] = Memory[Instr[3]] + Memory[Instr[4]];
+			elseif OpCode == 1 then -- SUB
+				Memory[Instr[2]] = Memory[Instr[3]] - Memory[Instr[4]];
+			elseif OpCode == 2 then -- MUL
+				Memory[Instr[2]] = Memory[Instr[3]] * Memory[Instr[4]];
+			elseif OpCode == 3 then -- DIV
+				Memory[Instr[2]] = Memory[Instr[3]] // Memory[Instr[4]];
+			elseif OpCode == 4 then -- GET
+				local A = Instr[2];
+				local B = Instr[3];
+				
+				Memory[A] = Memory[(B ~= nil and B) or A];
+			elseif OpCode == 5 then -- CLEAR
+				Memory[Instr[2]] = 0;
+			elseif OpCode == 6 then -- MOVE
+				Memory[Instr[2]] = Memory[Instr[3]];
+			elseif OpCode == 7 then -- SET
+				Memory[Instr[2]] = Instr[3];
+			elseif OpCode == 8 then -- COUT
+				io.write(Memory[a]);
+			elseif OpCode == 9 then -- COUTNL
+				print(Memory[Instr[2]]);
+			elseif OpCode == 10 then -- COUTNLRANGE
+				print(Concat(Memory, false, Instr[2], Instr[3]));
+			elseif OpCode == 11 then -- COUTNLRANGESTR
+				print(Concat(Memory, true, Instr[2], Instr[3]));
+			elseif OpCode == 12 then -- JMP
+				PC = PC + Instr[2];
+			elseif OpCode == 13 then -- SETPC
+				PC = Instr[2];
+			elseif OpCode == 14 then -- RESETPC
+				PC = 0;
+			elseif OpCode == 15 then -- HALT
+				os.execute("sleep " .. Instr[2]);
+			elseif OpCode == 16 then -- KILL
 				break;
-			elseif opcode == 17 then -- TESTLT
-				if not (self.memory[a] < self.memory[b]) then
-					addpc(c);
+			elseif OpCode == 17 then -- TESTLT
+				if not (Memory[Instr[2]] < Memory[Instr[3]]) then
+					PC = PC + Instr[4];
 				end
-			elseif opcode == 18 then -- TESTGT
-				if not (self.memory[a] > self.memory[b]) then
-					addpc(c);
+			elseif OpCode == 18 then -- TESTGT
+				if not (Memory[Instr[2]] > Memory[Instr[3]]) then
+					PC = PC + Instr[4];
 				end
-			elseif opcode == 19 then -- TESTLE
-				if not (self.memory[a] <= self.memory[b]) then
-					addpc(c);
+			elseif OpCode == 19 then -- TESTLE
+				if not (Memory[Instr[2]] <= Memory[Instr[3]]) then
+					PC = PC + Instr[4];
 				end
-			elseif opcode == 20 then -- TESTGE
-				if not (self.memory[a] >= self.memory[b]) then
-					addpc(c);
+			elseif OpCode == 20 then -- TESTGE
+				if not (Memory[Instr[2]] >= Memory[Instr[3]]) then
+					PC = PC + Instr[4];
 				end
-			elseif opcode == 21 then -- TESTEQ
-				if not (self.memory[a] == self.memory[b]) then
-					addpc(c);
+			elseif OpCode == 21 then -- TESTEQ
+				if not (Memory[Instr[2]] == Memory[Instr[3]]) then
+					PC = PC + Instr[4];
 				end
-			elseif opcode == 22 then -- CALL
-				self:getProto(a).exec();
-			elseif opcode == 23 then -- RETURN
-				return table.move(self.memory, a, b, 1, {});
-			end
-		end
-	end
-end
+			elseif OpCode == 22 then -- CALL
+				local Proto = self:GetProto(Instr[2]);
 
-return as;
+				if not Proto.Wrapped then
+					self:WrapProto(Proto);
+				end;
+
+				Proto.Execute();
+			elseif OpCode == 23 then -- RETURN
+				return table.move(Memory, Instr[2], Instr[3], 1, {});
+			end;
+		end;
+	end;
+
+	Proto.Wrapped = true;
+end;
+
+return Assembler;
