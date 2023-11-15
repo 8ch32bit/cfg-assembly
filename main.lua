@@ -1,35 +1,39 @@
-local as       = require('src.as');
-local parser   = require('src.parser');
+local require = require;
 
-local readFile = require('src.readFile');
+local Assembler = require('src/Assembler');
+local Parser    = require('src/Parser');
+local ReadFile  = require('src/ReadFile');
 
-local function newAssembler(src, name)
-	return as.new(name, parser.parse(src));
-end
+local Module = {};
 
-local function newAssemblerFile(path, name)
-	return newAssembler(readFile(path), name);
-end
-
-local function wrap(assembler)
-	local main  = assembler:getProto("main");
-	local setup = assembler:getProto("setup");
+function Module.WrapString(Source, Name)
+	local ASM = Assembler.new(Name, Parser(Source));
+	
+	local Main  = ASM:GetProto("main");
+	local Setup = ASM:GetProto("setup");
 	
 	return function()
-		if setup then
-			setup.exec();
-		end
+		if Setup then
+			Setup.Execute();
+		end;
 		
-		return main.exec();
-	end
-end
+		return Main.Execute();
+	end;
+end;
 
-local function wrapSrc(src, name)
-	return wrap(newAssembler(src, name))
-end
+function Module.WrapFile(Path, Name)
+	local ASM = Assembler.new(Name, Parser(ReadFile(Path)));
+	
+	local Main  = ASM:GetProto("main");
+	local Setup = ASM:GetProto("setup");
+	
+	return function()
+		if Setup then
+			Setup.Execute();
+		end;
+		
+		return Main.Execute();
+	end;
+end;
 
-local function wrapFile(src, name)
-	return wrap(newAssemblerFile(src, name));
-end
-
-return {wrap = wrap, wrapSrc = wrapSrc, wrapFile = wrapFile};
+return Module;
