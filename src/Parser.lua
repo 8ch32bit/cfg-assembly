@@ -22,18 +22,24 @@ local function Parse(Source)
 	local Position = 0;
 	
 	local CurrentLine = "";
+
+	::continue::
 		
 	while Position <= Length do
 		Position = Position + 1;
 		local Substring = string.sub(Source, Position, Position);
 			
-		if CurrentLine ~= "" and Substring == "\n" then
-			CurrentLine = CurrentLine .. Substring;
-		else
-			table.insert(Lines, CurrentLine);
-				
-			CurrentLine = "";
+		if CurrentLine ~= "" then
+			if Substring == "\n" then
+				CurrentLine = CurrentLine .. Substring;
+
+				goto continue;
+			end;
 		end;
+		
+		table.insert(Lines, CurrentLine);
+				
+		CurrentLine = "";
 	end;
 
 	local LineCount = #Lines;
