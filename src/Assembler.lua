@@ -1,23 +1,37 @@
 local null = "null";
 
-local table  = table;
+local _VERSION = _VERSION;
+local table = table;
 local string = string;
-local io     = io;
-local os     = os;
-local print  = print;
+local io = io;
+local os = os;
+local print = print;
+local setmetatable = setmetatable;
+
+-- Luau libraries
+
+local task = task or {};
+
+-- Functions
+
+local task_wait = task.wait;
+local table_create = table.create;
+local table_concat = table.concat;
+local table_move = table.move;
+local string_char = string.char;
 
 local function Concat(Table, Encode, A, B) -- Concat function that can do ascii chars
 	A = A or 1;
 	B = B or #Table;
 
 	if not Encode then
-		return table.concat(Table, "", A, B);
+		return table_concat(Table, "", A, B);
 	end;
 
 	local String = "";
 	
 	for Idx = A, B do
-		String = String .. (encode and string.char(Table[idx]) or "");
+		String = String .. (encode and string_char(Table[idx]) or "");
 	end;
 
 	return String;
@@ -33,7 +47,7 @@ function Assembler.new(Name, Protos, AllocSize)
 
 	self.Name = Name or "as-main";
 	
-	local Memory = table.create(AllocSize or 1024);
+	local Memory = table_create(AllocSize or 1024);
 
 	self.Memory = Memory;
 	self.Protos = Protos;
@@ -63,9 +77,9 @@ end;
 function Assembler:WrapProto(Proto)
 	Proto = Proto or self:GetProto();
 
-	local Memory       = self.Memory;
+	local Memory = self.Memory;
 	local Instructions = Proto.Instructions;
-	local Limit        = #Instructions;
+	local Limit = #Instructions;
 	
 	local function Execute()
 		local PC = 0;
@@ -109,7 +123,11 @@ function Assembler:WrapProto(Proto)
 			elseif OpCode == 14 then -- RESETPC
 				PC = 0;
 			elseif OpCode == 15 then -- HALT
-				os.execute("sleep " .. Instr[2]);
+				if os_execute then
+					os_execute("sleep " .. Instr[2]);
+				elseif _VERSION == "Luau" and task_wait then
+					task_wait(Instr[2]);
+				end;
 			elseif OpCode == 16 then -- KILL
 				break;
 			elseif OpCode == 17 then -- TESTLT
@@ -141,7 +159,7 @@ function Assembler:WrapProto(Proto)
 
 				Proto.Execute();
 			elseif OpCode == 23 then -- RETURN
-				return table.move(Memory, Instr[2], Instr[3], 1, {});
+				return table_move(Memory, Instr[2], Instr[3], 1, {});
 			end;
 		end;
 	end;
